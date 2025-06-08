@@ -1,33 +1,54 @@
 import 'dart:io';
 import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_interactions/nyxx_interactions.dart';
 
 void main() async {
-  String token = Platform.environment['TOKEN'] ?? '';
+  final token = Platform.environment['TOKEN'] ?? '';
 
   final client = await Nyxx.connectGateway(
     token,
     GatewayIntents.all | GatewayIntents.messageContent,
   );
 
-  final bot = await client.users.fetchCurrentUser();
+  final interactions = IInteractions.create(WebsocketInteractionBackend(client));
+
+  // Register slash command
+  interactions.registerSlashCommand(SlashCommandBuilder(
+    'calc',
+    'Calculate total price',
+    [
+      CommandOptionBuilder(CommandOptionType.integer, 'skellies', 'Amount of skellies', required: true),
+      CommandOptionBuilder(CommandOptionType.integer, 'money', 'Amount of money (in millions)', required: true),
+      CommandOptionBuilder(CommandOptionType.integer, 'elytras', 'Amount of elytras', required: true),
+    ],
+  )..registerHandler((event) async {
+      final skellies = event.getArg('skellies').value as int;
+      final money = event.getArg('money').value as int;
+      final elytras = event.getArg('elytras').value as int;
+
+      final total = skellies * 0.20 + money * 0.20 + elytras * 15;
+
+      await event.respond(MessageBuilder(
+        content: '### 💸 Calculation\n- Skellies: $skellies x \$0.20\n- Money: ${money}M x \$0.20\n- Elytras: $elytras x \$15.00\n\n**Total: \$${total.toStringAsFixed(2)}**',
+      ));
+  }));
+
+  await interactions.syncCommands();
+
   print("✅ Bot is online");
 
-  // Message handling
+  // Existing message + channel create handlers remain unchanged...
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
+    final bot = await client.users.fetchCurrentUser();
 
-    // Only allow commands from a specific user (ID: 1300544825371656202)
-    if (event.message.author.id.toString() != '1300544825371656202') {
-      return;
-    }
+    if (event.message.author.id.toString() != '1300544825371656202') return;
 
-    // Respond to bot mention
     if (event.mentions.contains(bot)) {
       await event.message.channel.sendMessage(MessageBuilder(content: '.'));
       await event.message.delete();
     }
 
-    // Respond to .v command
     if (content == '.v') {
       await event.message.channel.sendMessage(MessageBuilder(
         content: '### Thank you for your purchase! Please vouch in <#1371532842961604709>, and if you want to attach an image, blur the username that delivered the goods.',
@@ -35,7 +56,6 @@ void main() async {
       await event.message.delete();
     }
 
-    // Respond to .pp command
     if (content == '.pp') {
       await event.message.channel.sendMessage(MessageBuilder(
         content: '## Please send your amount in EURO to http://paypal.me/LauraBaune175 as Friends & Family. You must cover any fees.',
@@ -44,7 +64,6 @@ void main() async {
     }
   });
 
-  // Auto message when a new text channel is created
   client.onChannelCreate.listen((event) async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
@@ -59,9 +78,9 @@ void main() async {
     }
   });
 
-  // Fake web server to keep bot alive on platforms like Render
-  var port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
-  var server = await HttpServer.bind(InternetAddress.anyIPv4, port);
+  // Fake server
+  final port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
+  final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print("🌍 Fake server running on port $port");
   await for (var request in server) {
     request.response
