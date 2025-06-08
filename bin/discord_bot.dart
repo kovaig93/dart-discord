@@ -65,7 +65,7 @@ void main() async {
 
       final skelliesPrice = 0.20;
       final moneyPrice = 0.20;
-      final elytraPrice = 15.00;
+      final elytraPrice = 20.00;
 
       final total = (skellies * skelliesPrice) +
           (money * moneyPrice) +
