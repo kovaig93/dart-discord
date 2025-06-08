@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:nyxx/nyxx.dart';
-import 'package:nyxx_interactions/nyxx_interactions.dart';
 
 void main() async {
   final token = Platform.environment['TOKEN'] ?? '';
@@ -10,38 +9,70 @@ void main() async {
     GatewayIntents.all | GatewayIntents.messageContent,
   );
 
-  final interactions = IInteractions.create(WebsocketInteractionBackend(client));
+  final bot = await client.users.fetchCurrentUser();
+  print("✅ Bot is online as ${bot.username}");
 
-  // Register slash command
-  interactions.registerSlashCommand(SlashCommandBuilder(
-    'calc',
-    'Calculate total price',
-    [
-      CommandOptionBuilder(CommandOptionType.integer, 'skellies', 'Amount of skellies', required: true),
-      CommandOptionBuilder(CommandOptionType.integer, 'money', 'Amount of money (in millions)', required: true),
-      CommandOptionBuilder(CommandOptionType.integer, 'elytras', 'Amount of elytras', required: true),
-    ],
-  )..registerHandler((event) async {
-      final skellies = event.getArg('skellies').value as int;
-      final money = event.getArg('money').value as int;
-      final elytras = event.getArg('elytras').value as int;
+  // Register slash command on ready
+  client.onReady.listen((_) async {
+    final commands = await client.interactions.fetchGlobalCommands();
 
-      final total = skellies * 0.20 + money * 0.20 + elytras * 15;
-
-      await event.respond(MessageBuilder(
-        content: '### 💸 Calculation\n- Skellies: $skellies x \$0.20\n- Money: ${money}M x \$0.20\n- Elytras: $elytras x \$15.00\n\n**Total: \$${total.toStringAsFixed(2)}**',
+    if (!commands.any((cmd) => cmd.name == 'calc')) {
+      await client.interactions.createGlobalCommand(ApplicationCommandBuilder(
+        name: 'calc',
+        description: 'Calculate total price',
+        options: [
+          CommandOptionBuilder(
+            type: CommandOptionType.integer,
+            name: 'skellies',
+            description: 'Amount of skellies',
+            required: true,
+          ),
+          CommandOptionBuilder(
+            type: CommandOptionType.integer,
+            name: 'money',
+            description: 'Amount of money (in millions)',
+            required: true,
+          ),
+          CommandOptionBuilder(
+            type: CommandOptionType.integer,
+            name: 'elytras',
+            description: 'Amount of elytras',
+            required: true,
+          ),
+        ],
       ));
-  }));
+      print('✅ Slash command /calc registered');
+    }
+  });
 
-  await interactions.syncCommands();
+  // Slash command handler
+  client.onInteractionCreate.listen((event) async {
+    if (event is! IApplicationCommandInteraction) return;
+    if (event.command.name != 'calc') return;
 
-  print("✅ Bot is online");
+    final skellies = event.command.getInt('skellies')!;
+    final money = event.command.getInt('money')!;
+    final elytras = event.command.getInt('elytras')!;
 
-  // Existing message + channel create handlers remain unchanged...
+    final total = skellies * 0.20 + money * 0.20 + elytras * 15.00;
+
+    await event.respond(MessageBuilder(
+      content: '''
+### 💰 Calculation
+- Skellies: $skellies × \$0.20
+- Money: ${money}M × \$0.20
+- Elytras: $elytras × \$15.00
+
+**Total: \$${total.toStringAsFixed(2)}**
+''',
+    ));
+  });
+
+  // Message create handler
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
-    final bot = await client.users.fetchCurrentUser();
 
+    // Only allow commands from a specific user (ID: 1300544825371656202)
     if (event.message.author.id.toString() != '1300544825371656202') return;
 
     if (event.mentions.contains(bot)) {
@@ -64,6 +95,7 @@ void main() async {
     }
   });
 
+  // Send message in new text channel
   client.onChannelCreate.listen((event) async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
@@ -71,18 +103,18 @@ void main() async {
         await textChannel.sendMessage(MessageBuilder(content:
           "## Hello! Please describe your request and wait for a response. Make sure to ping us too. The current average response time is 1–10 minutes."
         ));
-        print("👋 Sent Hi in a new text channel with ID: ${textChannel.id}");
+        print("👋 Sent greeting in new channel: ${textChannel.id}");
       } catch (e) {
-        print("❌ Failed to send message in new channel with ID: ${textChannel.id} - $e");
+        print("❌ Failed to send message in new channel ${textChannel.id} - $e");
       }
     }
   });
 
-  // Fake server
+  // Fake server to keep bot alive on platforms like Render
   final port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
   final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
-  print("🌍 Fake server running on port $port");
-  await for (var request in server) {
+  print("🌐 Keep-alive server running on port $port");
+  await for (final request in server) {
     request.response
       ..write("Bot is running!")
       ..close();
