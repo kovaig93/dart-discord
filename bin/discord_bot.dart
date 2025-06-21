@@ -39,7 +39,7 @@ void main() async {
     if (content == '.pp') {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
-            '## Please send your amount in EURO to http://paypal.me/LauraBaune175 as Friends & Family. You must cover any fees.',
+            '## Please send your amount in EURO to https://paypal.me/DerolsShop as Friends & Family. You must cover any fees.',
       ));
       await event.message.delete();
     }
