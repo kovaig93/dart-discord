@@ -77,6 +77,36 @@ void main() async {
       // DO NOT delete message for .c command
       return;
     }
+
+    // Respond to .n @user command
+    if (content.startsWith('.n')) {
+      final mentionedUsers = event.message.mentions;
+
+      if (mentionedUsers.isEmpty) {
+        await event.message.channel.sendMessage(MessageBuilder(
+          content: '❌ Please mention a user to notify.',
+        ));
+        return;
+      }
+
+      for (final user in mentionedUsers) {
+        try {
+          await user.sendMessage(MessageBuilder(
+            content: 'Please check your ticket in DonutShop.',
+          ));
+          await event.message.channel.sendMessage(MessageBuilder(
+            content: '✅ Notified ${user.mention}',
+          ));
+        } catch (e) {
+          await event.message.channel.sendMessage(MessageBuilder(
+            content: '❌ Failed to notify ${user.mention}.',
+          ));
+        }
+      }
+
+      await event.message.delete();
+      return;
+    }
   });
 
   // Auto message when a new text channel is created
