@@ -4,15 +4,19 @@ import 'package:nyxx/nyxx.dart';
 void main() async {
   String token = Platform.environment['TOKEN'] ?? '';
 
-  final client = await Nyxx.connectGateway(
+  // HTTP client for REST endpoints (DM creation, sending messages)
+  final httpClient = Nyxx(token);
+
+  // Gateway client for events
+  final gatewayClient = await Nyxx.connectGateway(
     token,
     GatewayIntents.all | GatewayIntents.messageContent,
   );
 
-  final bot = await client.users.fetchCurrentUser();
+  final bot = await gatewayClient.users.fetchCurrentUser();
   print("✅ Bot is online");
 
-  client.onMessageCreate.listen((event) async {
+  gatewayClient.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
     // Only allow commands from a specific user (ID: 1300544825371656202)
@@ -78,7 +82,7 @@ void main() async {
       return;
     }
 
-    // Added .n command to notify mentioned users via DM
+    // New .n command: notify mentioned users by DM
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
@@ -91,7 +95,7 @@ void main() async {
 
       for (final user in mentionedUsers) {
         try {
-          final dmChannel = await client.httpEndpoints.createDM(user.id);
+          final dmChannel = await httpClient.http.createDM(user.id);
 
           await dmChannel.sendMessage(
             MessageBuilder(
@@ -114,7 +118,7 @@ void main() async {
   });
 
   // Auto message when a new text channel is created
-  client.onChannelCreate.listen((event) async {
+  gatewayClient.onChannelCreate.listen((event) async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
       try {
