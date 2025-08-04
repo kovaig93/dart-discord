@@ -5,7 +5,7 @@ void main() async {
   String token = Platform.environment['TOKEN'] ?? '';
 
   // HTTP client for REST endpoints (DM creation, sending messages)
-  final httpClient = Nyxx(token);
+  final httpClient = NyxxFactory.create(token);
 
   // Gateway client for events
   final gatewayClient = await Nyxx.connectGateway(
@@ -95,7 +95,7 @@ void main() async {
 
       for (final user in mentionedUsers) {
         try {
-          final dmChannel = await httpClient.http.createDM(user.id);
+          final dmChannel = await httpClient.rest.createDM(user.id);
 
           await dmChannel.sendMessage(
             MessageBuilder(
