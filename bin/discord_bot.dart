@@ -4,19 +4,15 @@ import 'package:nyxx/nyxx.dart';
 void main() async {
   String token = Platform.environment['TOKEN'] ?? '';
 
-  // HTTP client for REST endpoints (DM creation, sending messages)
-  final httpClient = NyxxFactory.create(token);
-
-  // Gateway client for events
-  final gatewayClient = await Nyxx.connectGateway(
+  final client = await Nyxx.connectGateway(
     token,
     GatewayIntents.all | GatewayIntents.messageContent,
   );
 
-  final bot = await gatewayClient.users.fetchCurrentUser();
+  final bot = await client.users.fetchCurrentUser();
   print("✅ Bot is online");
 
-  gatewayClient.onMessageCreate.listen((event) async {
+  client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
     // Only allow commands from a specific user (ID: 1300544825371656202)
@@ -82,33 +78,29 @@ void main() async {
       return;
     }
 
-    // New .n command: notify mentioned users by DM
+    // Respond to .n (notify) command
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
       if (mentionedUsers.isEmpty) {
         await event.message.channel.sendMessage(
-          MessageBuilder(content: '❌ Please mention at least one user.'),
+          MessageBuilder(content: '❌ Please mention a user to notify.'),
         );
         return;
       }
 
       for (final user in mentionedUsers) {
         try {
-          final dmChannel = await httpClient.rest.createDM(user.id);
-
-          await dmChannel.sendMessage(
-            MessageBuilder(
-              content: '📬 Please check your ticket in DonutShop.',
-            ),
-          );
-
+          final dmChannel = await user.createDM();
+          await dmChannel.sendMessage(MessageBuilder(
+            content: '📬 Please check your ticket in DonutShop.',
+          ));
           await event.message.channel.sendMessage(
             MessageBuilder(content: '✅ Notified <@${user.id}>'),
           );
         } catch (e) {
           await event.message.channel.sendMessage(
-            MessageBuilder(content: '❌ Failed to notify <@${user.id}>.'),
+            MessageBuilder(content: '❌ Failed to notify <@${user.id}>'),
           );
         }
       }
@@ -118,7 +110,7 @@ void main() async {
   });
 
   // Auto message when a new text channel is created
-  gatewayClient.onChannelCreate.listen((event) async {
+  client.onChannelCreate.listen((event) async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
       try {
