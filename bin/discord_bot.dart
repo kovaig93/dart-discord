@@ -15,8 +15,10 @@ void main() async {
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
-    // Only allow commands from a specific user
-    if (event.message.author.id.toString() != '1300544825371656202') return;
+    // Only allow commands from a specific user (ID: 1300544825371656202)
+    if (event.message.author.id.toString() != '1300544825371656202') {
+      return;
+    }
 
     // Respond to bot mention
     if (event.mentions.contains(bot)) {
@@ -42,7 +44,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // .c command
+    // .c (calculate) command
     if (content.startsWith('.c')) {
       int skellies = 0;
       int money = 0;
@@ -74,7 +76,7 @@ void main() async {
       return;
     }
 
-    // ✅ NEW: .n @user command
+    // .n @user command — Notify a user via DM
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
@@ -87,18 +89,17 @@ void main() async {
 
       for (final user in mentionedUsers) {
         try {
-          final dm = await client.channels.createDm(user.id);
-          await dm.sendMessage(MessageBuilder(
+          final dmChannel = await user.createDM();
+          await dmChannel.sendMessage(MessageBuilder(
             content: 'Please check your ticket in DonutShop.',
           ));
 
           await event.message.channel.sendMessage(MessageBuilder(
-            content: '✅ Notified ${MentionUtils.mentionUser(user.id)}',
+            content: '✅ Notified <@${user.id}>',
           ));
         } catch (e) {
           await event.message.channel.sendMessage(MessageBuilder(
-            content:
-                '❌ Failed to notify ${MentionUtils.mentionUser(user.id)}.',
+            content: '❌ Failed to notify <@${user.id}>.',
           ));
         }
       }
@@ -119,12 +120,13 @@ void main() async {
         ));
         print("👋 Sent Hi in a new text channel with ID: ${textChannel.id}");
       } catch (e) {
-        print("❌ Failed to send message in new channel: ${textChannel.id} - $e");
+        print(
+            "❌ Failed to send message in new channel with ID: ${textChannel.id} - $e");
       }
     }
   });
 
-  // Keep alive server
+  // Keep-alive web server (Render etc.)
   var port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
   var server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print("🌍 Fake server running on port $port");
