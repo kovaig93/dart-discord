@@ -77,36 +77,6 @@ void main() async {
       // DO NOT delete message for .c command
       return;
     }
-
-    // Respond to .n (notify) command
-    if (content.startsWith('.n')) {
-      final mentionedUsers = event.message.mentions;
-
-      if (mentionedUsers.isEmpty) {
-        await event.message.channel.sendMessage(
-          MessageBuilder(content: '❌ Please mention a user to notify.'),
-        );
-        return;
-      }
-
-      for (final user in mentionedUsers) {
-        try {
-          final dmChannel = await user.createDM();
-          await dmChannel.sendMessage(MessageBuilder(
-            content: '📬 Please check your ticket in DonutShop.',
-          ));
-          await event.message.channel.sendMessage(
-            MessageBuilder(content: '✅ Notified <@${user.id}>'),
-          );
-        } catch (e) {
-          await event.message.channel.sendMessage(
-            MessageBuilder(content: '❌ Failed to notify <@${user.id}>'),
-          );
-        }
-      }
-
-      await event.message.delete();
-    }
   });
 
   // Auto message when a new text channel is created
