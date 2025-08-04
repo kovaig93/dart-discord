@@ -4,7 +4,6 @@ import 'package:nyxx/nyxx.dart';
 void main() async {
   String token = Platform.environment['TOKEN'] ?? '';
 
-  final nyxx = Nyxx(token); // HTTP client for REST endpoints
   final client = await Nyxx.connectGateway(
     token,
     GatewayIntents.all | GatewayIntents.messageContent,
@@ -79,7 +78,7 @@ void main() async {
       return;
     }
 
-    // Respond to .n command (notify mentioned users)
+    // Added .n command to notify mentioned users via DM
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
@@ -92,8 +91,7 @@ void main() async {
 
       for (final user in mentionedUsers) {
         try {
-          // Use nyxx.httpEndpoints to create DM channel
-          final dmChannel = await nyxx.httpEndpoints.createDM(user.id);
+          final dmChannel = await client.httpEndpoints.createDM(user.id);
 
           await dmChannel.sendMessage(
             MessageBuilder(
