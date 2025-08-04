@@ -15,10 +15,8 @@ void main() async {
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
-    // Only allow commands from a specific user (ID: 1300544825371656202)
-    if (event.message.author.id.toString() != '1300544825371656202') {
-      return;
-    }
+    // Only allow commands from a specific user
+    if (event.message.author.id.toString() != '1300544825371656202') return;
 
     // Respond to bot mention
     if (event.mentions.contains(bot)) {
@@ -26,7 +24,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // Respond to .v command
+    // .v command
     if (content == '.v') {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
@@ -35,7 +33,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // Respond to .pp command
+    // .pp command
     if (content == '.pp') {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
@@ -44,7 +42,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // Respond to .c (calculate) command
+    // .c command
     if (content.startsWith('.c')) {
       int skellies = 0;
       int money = 0;
@@ -72,13 +70,11 @@ void main() async {
           (elytras * elytraPrice);
 
       final reply = '€${total.toStringAsFixed(2)}';
-
       await event.message.channel.sendMessage(MessageBuilder(content: reply));
-      // DO NOT delete message for .c command
       return;
     }
 
-    // Respond to .n @user command
+    // ✅ NEW: .n @user command
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
@@ -91,15 +87,18 @@ void main() async {
 
       for (final user in mentionedUsers) {
         try {
-          await user.sendMessage(MessageBuilder(
+          final dm = await client.channels.createDm(user.id);
+          await dm.sendMessage(MessageBuilder(
             content: 'Please check your ticket in DonutShop.',
           ));
+
           await event.message.channel.sendMessage(MessageBuilder(
-            content: '✅ Notified ${user.mention}',
+            content: '✅ Notified ${MentionUtils.mentionUser(user.id)}',
           ));
         } catch (e) {
           await event.message.channel.sendMessage(MessageBuilder(
-            content: '❌ Failed to notify ${user.mention}.',
+            content:
+                '❌ Failed to notify ${MentionUtils.mentionUser(user.id)}.',
           ));
         }
       }
@@ -114,17 +113,18 @@ void main() async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
       try {
-        await textChannel.sendMessage(MessageBuilder(content:
-            "## Hello! Please describe your request and wait for a response. Make sure to ping us too. The current average response time is 1–10 minutes."));
+        await textChannel.sendMessage(MessageBuilder(
+          content:
+              "## Hello! Please describe your request and wait for a response. Make sure to ping us too. The current average response time is 1–10 minutes.",
+        ));
         print("👋 Sent Hi in a new text channel with ID: ${textChannel.id}");
       } catch (e) {
-        print(
-            "❌ Failed to send message in new channel with ID: ${textChannel.id} - $e");
+        print("❌ Failed to send message in new channel: ${textChannel.id} - $e");
       }
     }
   });
 
-  // Fake web server to keep bot alive on platforms like Render
+  // Keep alive server
   var port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
   var server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print("🌍 Fake server running on port $port");
