@@ -26,7 +26,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // .v command
+    // Respond to .v command
     if (content == '.v') {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
@@ -35,7 +35,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // .pp command
+    // Respond to .pp command
     if (content == '.pp') {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
@@ -44,7 +44,7 @@ void main() async {
       await event.message.delete();
     }
 
-    // .c (calculate) command
+    // Respond to .c (calculate) command
     if (content.startsWith('.c')) {
       int skellies = 0;
       int money = 0;
@@ -72,40 +72,48 @@ void main() async {
           (elytras * elytraPrice);
 
       final reply = '€${total.toStringAsFixed(2)}';
+
       await event.message.channel.sendMessage(MessageBuilder(content: reply));
+      // DO NOT delete message for .c command
       return;
     }
 
-    // .n @user command — Notify a user via DM
+    // ====== NEW COMMAND: .n to notify user via DM =======
     if (content.startsWith('.n')) {
       final mentionedUsers = event.message.mentions;
 
       if (mentionedUsers.isEmpty) {
-        await event.message.channel.sendMessage(MessageBuilder(
-          content: '❌ Please mention a user to notify.',
-        ));
+        await event.message.channel.sendMessage(
+          MessageBuilder(content: '❌ Please mention at least one user.'),
+        );
         return;
       }
 
       for (final user in mentionedUsers) {
         try {
-          final dmChannel = await user.createDM();
-          await dmChannel.sendMessage(MessageBuilder(
-            content: 'Please check your ticket in DonutShop.',
-          ));
+          // Create DM channel
+          final dmChannel = await client.httpEndpoints.createDM(user.id);
 
-          await event.message.channel.sendMessage(MessageBuilder(
-            content: '✅ Notified <@${user.id}>',
-          ));
+          // Send DM
+          await dmChannel.sendMessage(
+            MessageBuilder(
+              content: '📬 Please check your ticket in DonutShop.',
+            ),
+          );
+
+          // Confirm notification in original channel
+          await event.message.channel.sendMessage(
+            MessageBuilder(content: '✅ Notified <@${user.id}>'),
+          );
         } catch (e) {
-          await event.message.channel.sendMessage(MessageBuilder(
-            content: '❌ Failed to notify <@${user.id}>.',
-          ));
+          await event.message.channel.sendMessage(
+            MessageBuilder(content: '❌ Failed to notify <@${user.id}>.'),
+          );
         }
       }
 
+      // Optionally delete the original command message
       await event.message.delete();
-      return;
     }
   });
 
@@ -114,10 +122,8 @@ void main() async {
     if (event.channel is TextChannel) {
       final textChannel = event.channel as TextChannel;
       try {
-        await textChannel.sendMessage(MessageBuilder(
-          content:
-              "## Hello! Please describe your request and wait for a response. Make sure to ping us too. The current average response time is 1–10 minutes.",
-        ));
+        await textChannel.sendMessage(MessageBuilder(content:
+            "## Hello! Please describe your request and wait for a response. Make sure to ping us too. The current average response time is 1–10 minutes."));
         print("👋 Sent Hi in a new text channel with ID: ${textChannel.id}");
       } catch (e) {
         print(
@@ -126,7 +132,7 @@ void main() async {
     }
   });
 
-  // Keep-alive web server (Render etc.)
+  // Fake web server to keep bot alive on platforms like Render
   var port = int.tryParse(Platform.environment['PORT'] ?? '8080') ?? 8080;
   var server = await HttpServer.bind(InternetAddress.anyIPv4, port);
   print("🌍 Fake server running on port $port");
