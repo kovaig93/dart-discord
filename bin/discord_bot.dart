@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:nyxx/nyxx.dart';
 
 void main() async {
-  String token = Platform.environment['TOKEN'] ?? '';
+  final token = Platform.environment['TOKEN'];
+  if (token == null || token.isEmpty) {
+    throw Exception('❌ No TOKEN environment variable found.');
+  }
 
   final client = await Nyxx.connectGateway(
     token,
@@ -40,6 +43,18 @@ void main() async {
       await event.message.channel.sendMessage(MessageBuilder(
         content:
             '## Please send your amount in EURO to http://paypal.me/Adm3w as Friends & Family. You must cover any fees.',
+      ));
+      await event.message.delete();
+    }
+
+    // Respond to .t command
+    if (content == '.t') {
+      await event.message.channel.sendMessage(MessageBuilder(
+        content: '''
+● You must invite at least 3 people minimum, and they must join the server. There are no exceptions. For each invite you get 4M (3 people = 12M).
+● You must use your own invite link. Using an invite link created by someone else will not count your invites. Tutorial is shown in <#1371536881778688173>
+● After you invite the people and they join, you must wait 5 hours before claiming your rewards. This is for everyone, no exceptions.
+''',
       ));
       await event.message.delete();
     }
