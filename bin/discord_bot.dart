@@ -18,10 +18,13 @@ void main() async {
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
-    // Only allow commands from a specific user (ID: 1300544825371656202)
-    if (event.message.author.id.toString() != '1300544825371656202') {
-      return;
-    }
+// Only allow commands from specific users
+const allowedUsers = ['1300544825371656202', '630125088427212811'];
+
+if (!allowedUsers.includes(event.message.author.id.toString())) {
+  return;
+}
+
 
     // Respond to bot mention
     if (event.mentions.contains(bot)) {
