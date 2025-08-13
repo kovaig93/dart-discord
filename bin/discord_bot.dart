@@ -18,10 +18,11 @@ void main() async {
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
-// Only allow commands from specific users
-const allowedUsers = ['1300544825371656202', '630125088427212811'];
-
-if (!allowedUsers.includes(event.message.author.id.toString())) {
+// Only allow commands from these users (IDs: 1300544825371656202, 630125088427212811)
+if (
+  event.message.author.id.toString() != '1300544825371656202' &&
+  event.message.author.id.toString() != '630125088427212811'
+) {
   return;
 }
 
