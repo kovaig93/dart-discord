@@ -57,7 +57,7 @@ if (
         content: '''
 ● You must invite at least 3 people minimum, and they must join the server. There are no exceptions. For each invite you get 5M (3 people = 15M).
 ● You must use your own invite link. Using an invite link created by someone else will not count your invites. Tutorial is shown in <#1371536881778688173>
-● After you invite the people and they join, you must wait 5 hours before claiming your rewards. This is for everyone, no exceptions.
+● After you invite the people and they join send your in-game username. You must wait 5 hours before claiming your rewards. This is for everyone, no exceptions.
 ''',
       ));
       await event.message.delete();
