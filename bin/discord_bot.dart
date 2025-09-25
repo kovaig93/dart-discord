@@ -66,7 +66,7 @@ void main() async {
     }
 
     // Respond to .c (calculate) command
-    if (content.startsWith('.c')) {
+    if (content.startsWith('.r')) {
       int skellies = 0;
       int money = 0;
       int elytras = 0;
