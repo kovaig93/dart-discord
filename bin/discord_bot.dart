@@ -18,14 +18,16 @@ void main() async {
   client.onMessageCreate.listen((event) async {
     final content = event.message.content.trim();
 
-// Only allow commands from these users (IDs: 1300544825371656202, 630125088427212811)
-if (
-  event.message.author.id.toString() != '1300544825371656202' &&
-  event.message.author.id.toString() != '630125088427212811'
-) {
-  return;
-}
+    // Only allow commands from these users
+    const allowedUsers = [
+      '1300544825371656202',
+      '630125088427212811',
+      '743521214626136116', // ✅ Added new whitelisted user
+    ];
 
+    if (!allowedUsers.contains(event.message.author.id.toString())) {
+      return;
+    }
 
     // Respond to bot mention
     if (event.mentions.contains(bot)) {
@@ -82,8 +84,9 @@ if (
         }
       }
 
-      final skelliesPrice = 0.20;
-      final moneyPrice = 0.20;
+      // ✅ Updated prices
+      final skelliesPrice = 0.04;
+      final moneyPrice = 0.04;
       final elytraPrice = 20.00;
 
       final total = (skellies * skelliesPrice) +
